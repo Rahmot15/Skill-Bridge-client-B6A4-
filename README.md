@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Skill Bridge Client
+
+Skill Bridge is a multi-role tutoring platform frontend built with Next.js.  
+It supports student, tutor, and admin workflows including tutor discovery, bookings, reviews, and dashboard management.
+
+## Tech Stack
+
+- Next.js 16 (App Router)
+- React 19 + TypeScript
+- Tailwind CSS 4
+- Radix UI + shadcn/ui components
+- better-auth (session/auth integration)
+
+## Main Features
+
+- Authentication: register, login, email verification flow
+- Public tutor listing and tutor details pages
+- Student dashboard: profile and bookings
+- Tutor dashboard: profile, availability, and bookings
+- Admin dashboard: users, categories, and booking management
+
+## Project Structure
+
+```text
+src/
+  app/
+    (commonLayout)/        # public pages (home, login, register, find tutors)
+    (dashboardLayout)/     # role-based dashboards (ADMIN/STUDENT/TUTOR)
+  components/
+    modules/               # feature modules
+    ui/                    # reusable UI components
+  services/                # server-side API service calls
+  constants/               # shared constants (roles, etc.)
+  lib/                     # shared utilities
+```
 
 ## Getting Started
 
-First, run the development server:
+### 1) Install dependencies
+
+```bash
+npm install
+```
+
+### 2) Configure environment variables
+
+Create a `.env.local` file in the project root:
+
+```env
+NEXT_PUBLIC_SERVER_BASE_URL=http://localhost:5000
+BACKEND_URL=http://localhost:5000
+FRONTEND_URL=http://localhost:3000
+API_URL=http://localhost:5000
+AUTH_URL=http://localhost:5000
+```
+
+### 3) Run development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Available Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev` — start development server
+- `npm run build` — create production build
+- `npm run start` — run production server
+- `npm run lint` — run ESLint
 
-## Learn More
+## Notes
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The client relies on a backend API server for auth, tutor, booking, review, and admin data.
+- API/auth session routes are proxied through `next.config.ts`.
