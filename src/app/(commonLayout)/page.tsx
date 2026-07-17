@@ -11,8 +11,8 @@ import Testimonials from "@/components/modules/HomePages/Testimonials";
   return (
     <div className="">
       <Hero/>
-      <Stats/>
       <FeaturedTutors />
+      <Stats/>
       <Features/>
       <HowItWorks/>
       <Pricing/>
