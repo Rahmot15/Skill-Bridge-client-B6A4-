@@ -12,11 +12,11 @@ import Testimonials from "@/components/modules/HomePages/Testimonials";
     <div className="">
       <Hero/>
       <FeaturedTutors />
-      <Stats/>
       <Features/>
       <HowItWorks/>
       <Pricing/>
       <Testimonials/>
+      <Stats/>
       <CTA/>
     </div>
   );
