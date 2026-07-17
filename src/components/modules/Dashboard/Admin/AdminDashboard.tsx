@@ -2,7 +2,8 @@
 
 import { Users, GraduationCap, BookOpen, Layers, ShieldCheck, TrendingUp, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Pie, PieChart, Cell, Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { Pie, PieChart, Cell, Bar, BarChart, XAxis, YAxis } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
 // ─── Type ─────────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,34 @@ type Category = {
   id: string;
   title: string;
 };
+
+// ─── Chart Config ─────────────────────────────────────────────────────────────
+
+const roleChartConfig = {
+  students: {
+    label: "Students",
+    color: "var(--chart-2)",
+  },
+  tutors: {
+    label: "Tutors",
+    color: "var(--chart-4)",
+  },
+} satisfies ChartConfig;
+
+const bookingChartConfig = {
+  pending: {
+    label: "Pending",
+    color: "var(--chart-4)",
+  },
+  approved: {
+    label: "Approved",
+    color: "var(--chart-2)",
+  },
+  rejected: {
+    label: "Rejected",
+    color: "var(--chart-5)",
+  },
+} satisfies ChartConfig;
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 
@@ -108,22 +137,6 @@ function QuickAction({ icon: Icon, label, href, accent }: {
   );
 }
 
-// ─── Chart Tooltip ────────────────────────────────────────────────────────────
-
-function ChartTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-lg border border-zinc-100 bg-white px-3 py-2 shadow-lg">
-      <p className="text-[11px] font-semibold text-zinc-600">{label}</p>
-      {payload.map((entry: any, i: number) => (
-        <p key={i} className="text-[12px] text-zinc-500">
-          {entry.name}: <span className="font-semibold text-zinc-800">{entry.value}</span>
-        </p>
-      ))}
-    </div>
-  );
-}
-
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function AdminDashboard({ users, bookings, categories }: {
@@ -142,15 +155,15 @@ export default function AdminDashboard({ users, bookings, categories }: {
 
   // Pie chart data — user roles
   const roleData = [
-    { name: "Students", value: totalStudents, fill: "#34d399" },
-    { name: "Tutors", value: totalTutors, fill: "#facc15" },
+    { name: "Students", value: totalStudents, fill: "var(--color-students)" },
+    { name: "Tutors", value: totalTutors, fill: "var(--color-tutors)" },
   ];
 
   // Bar chart data — booking statuses
   const bookingStatusData = [
-    { name: "Pending", count: bookings.filter((b) => b.status === "PENDING").length },
-    { name: "Approved", count: bookings.filter((b) => b.status === "APPROVED").length },
-    { name: "Rejected", count: bookings.filter((b) => b.status === "REJECTED").length },
+    { name: "Pending", count: bookings.filter((b) => b.status === "PENDING").length, fill: "var(--color-pending)" },
+    { name: "Approved", count: bookings.filter((b) => b.status === "APPROVED").length, fill: "var(--color-approved)" },
+    { name: "Rejected", count: bookings.filter((b) => b.status === "REJECTED").length, fill: "var(--color-rejected)" },
   ];
 
   return (
@@ -194,37 +207,40 @@ export default function AdminDashboard({ users, bookings, categories }: {
               <span className="text-[12px] text-zinc-400">{totalUsers} total</span>
             </div>
             <div className="flex items-center gap-6">
-              <div className="h-[200px] w-[200px] shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={roleData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={85}
-                      paddingAngle={4}
-                      dataKey="value"
-                      strokeWidth={0}
-                    >
-                      {roleData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<ChartTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              <ChartContainer config={roleChartConfig} className="h-[200px] w-[200px]">
+                <PieChart>
+                  <Pie
+                    data={roleData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={4}
+                    dataKey="value"
+                    strokeWidth={0}
+                  >
+                    {roleData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                </PieChart>
+              </ChartContainer>
               <div className="flex flex-col gap-3">
-                {roleData.map((item) => (
-                  <div key={item.name} className="flex items-center gap-2.5">
-                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.fill }} />
-                    <div>
-                      <p className="text-[12px] font-semibold text-zinc-700">{item.name}</p>
-                      <p className="text-[11px] text-zinc-400">{item.value} users</p>
-                    </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="h-3 w-3 rounded-full bg-[var(--color-students)]" />
+                  <div>
+                    <p className="text-[12px] font-semibold text-zinc-700">Students</p>
+                    <p className="text-[11px] text-zinc-400">{totalStudents} users</p>
                   </div>
-                ))}
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="h-3 w-3 rounded-full bg-[var(--color-tutors)]" />
+                  <div>
+                    <p className="text-[12px] font-semibold text-zinc-700">Tutors</p>
+                    <p className="text-[11px] text-zinc-400">{totalTutors} users</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -235,33 +251,28 @@ export default function AdminDashboard({ users, bookings, categories }: {
               <h2 className="text-[13px] font-bold text-zinc-800">Bookings by Status</h2>
               <span className="text-[12px] text-zinc-400">{totalBookings} total</span>
             </div>
-            <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={bookingStatusData} barSize={32}>
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "#a1a1aa" }}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "#a1a1aa" }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Bar dataKey="count" name="Bookings" radius={[6, 6, 0, 0]}>
-                    {bookingStatusData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.name === "Pending" ? "#facc15" : entry.name === "Approved" ? "#34d399" : "#f87171"}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <ChartContainer config={bookingChartConfig} className="h-[200px] w-full">
+              <BarChart data={bookingStatusData} barSize={32}>
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  allowDecimals={false}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                  {bookingStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ChartContainer>
           </div>
 
         </div>

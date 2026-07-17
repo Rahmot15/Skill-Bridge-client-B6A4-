@@ -5,7 +5,8 @@ import {
   Clock, CheckCircle2, XCircle, AlertCircle, TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Bar, BarChart, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Line, LineChart } from "recharts";
+import { Bar, BarChart, Cell, XAxis, YAxis, Line, LineChart } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,30 @@ type Booking = {
   student: { name: string; email: string };
   category: { title: string };
 };
+
+// ─── Chart Config ─────────────────────────────────────────────────────────────
+
+const statusChartConfig = {
+  pending: {
+    label: "Pending",
+    color: "var(--chart-4)",
+  },
+  accepted: {
+    label: "Accepted",
+    color: "var(--chart-2)",
+  },
+  rejected: {
+    label: "Rejected",
+    color: "var(--chart-5)",
+  },
+} satisfies ChartConfig;
+
+const trendChartConfig = {
+  bookings: {
+    label: "Bookings",
+    color: "var(--chart-4)",
+  },
+} satisfies ChartConfig;
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
@@ -70,22 +95,6 @@ function StatCard({ icon: Icon, label, value, accent }: {
         </div>
         <div className="mt-1 text-[12px] font-medium text-zinc-400">{label}</div>
       </div>
-    </div>
-  );
-}
-
-// ─── Chart Tooltip ────────────────────────────────────────────────────────────
-
-function ChartTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-lg border border-zinc-100 bg-white px-3 py-2 shadow-lg">
-      <p className="text-[11px] font-semibold text-zinc-600">{label}</p>
-      {payload.map((entry: any, i: number) => (
-        <p key={i} className="text-[12px] text-zinc-500">
-          {entry.name}: <span className="font-semibold text-zinc-800">{entry.value}</span>
-        </p>
-      ))}
     </div>
   );
 }
@@ -158,9 +167,9 @@ export default function TutorDashboard({ tutor, bookings }: {
 
   // Bar chart — booking statuses
   const statusData = [
-    { name: "Pending", count: pending },
-    { name: "Accepted", count: accepted },
-    { name: "Rejected", count: rejected },
+    { name: "Pending", count: pending, fill: "var(--color-pending)" },
+    { name: "Accepted", count: accepted, fill: "var(--color-accepted)" },
+    { name: "Rejected", count: rejected, fill: "var(--color-rejected)" },
   ];
 
   // Line chart — bookings over last 6 months
@@ -226,33 +235,28 @@ export default function TutorDashboard({ tutor, bookings }: {
               <h2 className="text-[13px] font-bold text-zinc-800">Booking Status</h2>
               <span className="text-[12px] text-zinc-400">{bookings.length} total</span>
             </div>
-            <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={statusData} barSize={32}>
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "#a1a1aa" }}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "#a1a1aa" }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Bar dataKey="count" name="Bookings" radius={[6, 6, 0, 0]}>
-                    {statusData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.name === "Pending" ? "#facc15" : entry.name === "Accepted" ? "#34d399" : "#f87171"}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <ChartContainer config={statusChartConfig} className="h-[200px] w-full">
+              <BarChart data={statusData} barSize={32}>
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  allowDecimals={false}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ChartContainer>
           </div>
 
           {/* Line Chart — Bookings Over Time */}
@@ -261,34 +265,31 @@ export default function TutorDashboard({ tutor, bookings }: {
               <h2 className="text-[13px] font-bold text-zinc-800">Bookings Trend</h2>
               <span className="text-[12px] text-zinc-400">Last 6 months</span>
             </div>
-            <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={monthlyData}>
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "#a1a1aa" }}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "#a1a1aa" }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Line
-                    type="monotone"
-                    dataKey="bookings"
-                    name="Bookings"
-                    stroke="#eab308"
-                    strokeWidth={2.5}
-                    dot={{ fill: "#eab308", r: 4, strokeWidth: 0 }}
-                    activeDot={{ r: 6, strokeWidth: 0 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <ChartContainer config={trendChartConfig} className="h-[200px] w-full">
+              <LineChart data={monthlyData}>
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  allowDecimals={false}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line
+                  type="monotone"
+                  dataKey="bookings"
+                  stroke="var(--color-bookings)"
+                  strokeWidth={2.5}
+                  dot={{ fill: "var(--color-bookings)", r: 4, strokeWidth: 0 }}
+                  activeDot={{ r: 6, strokeWidth: 0 }}
+                />
+              </LineChart>
+            </ChartContainer>
           </div>
 
         </div>

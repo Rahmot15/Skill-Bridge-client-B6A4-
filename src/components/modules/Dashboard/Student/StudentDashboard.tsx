@@ -5,7 +5,8 @@ import {
   GraduationCap, TrendingUp, UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Pie, PieChart, Cell, Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { Pie, PieChart, Cell, Bar, BarChart, XAxis, YAxis } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
 // ─── Type ─────────────────────────────────────────────────────────────────────
 
@@ -16,6 +17,30 @@ type Booking = {
   tutor: { name: string; image: string };
   category: { title: string };
 };
+
+// ─── Chart Config ─────────────────────────────────────────────────────────────
+
+const statusChartConfig = {
+  accepted: {
+    label: "Accepted",
+    color: "var(--chart-2)",
+  },
+  pending: {
+    label: "Pending",
+    color: "var(--chart-4)",
+  },
+  rejected: {
+    label: "Rejected",
+    color: "var(--chart-5)",
+  },
+} satisfies ChartConfig;
+
+const categoryChartConfig = {
+  count: {
+    label: "Bookings",
+    color: "var(--chart-2)",
+  },
+} satisfies ChartConfig;
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 
@@ -54,22 +79,6 @@ function StatCard({ icon: Icon, label, value, accent }: {
         </div>
         <div className="mt-1 text-[12px] font-medium text-zinc-400">{label}</div>
       </div>
-    </div>
-  );
-}
-
-// ─── Chart Tooltip ────────────────────────────────────────────────────────────
-
-function ChartTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-lg border border-zinc-100 bg-white px-3 py-2 shadow-lg">
-      <p className="text-[11px] font-semibold text-zinc-600">{label}</p>
-      {payload.map((entry: any, i: number) => (
-        <p key={i} className="text-[12px] text-zinc-500">
-          {entry.name}: <span className="font-semibold text-zinc-800">{entry.value}</span>
-        </p>
-      ))}
     </div>
   );
 }
@@ -153,9 +162,9 @@ export default function StudentDashboard({ bookings }: { bookings: Booking[] }) 
 
   // Pie chart — booking statuses
   const statusPieData = [
-    { name: "Accepted", value: accepted, fill: "#34d399" },
-    { name: "Pending", value: pending, fill: "#facc15" },
-    { name: "Rejected", value: rejected, fill: "#f87171" },
+    { name: "Accepted", value: accepted, fill: "var(--color-accepted)" },
+    { name: "Pending", value: pending, fill: "var(--color-pending)" },
+    { name: "Rejected", value: rejected, fill: "var(--color-rejected)" },
   ].filter((d) => d.value > 0);
 
   // Bar chart — bookings by category
@@ -209,31 +218,29 @@ export default function StudentDashboard({ bookings }: { bookings: Booking[] }) 
             </div>
             {statusPieData.length > 0 ? (
               <div className="flex items-center gap-6">
-                <div className="h-[200px] w-[200px] shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={statusPieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={55}
-                        outerRadius={85}
-                        paddingAngle={4}
-                        dataKey="value"
-                        strokeWidth={0}
-                      >
-                        {statusPieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<ChartTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <ChartContainer config={statusChartConfig} className="h-[200px] w-[200px]">
+                  <PieChart>
+                    <Pie
+                      data={statusPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={4}
+                      dataKey="value"
+                      strokeWidth={0}
+                    >
+                      {statusPieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
+                </ChartContainer>
                 <div className="flex flex-col gap-3">
                   {statusPieData.map((item) => (
                     <div key={item.name} className="flex items-center gap-2.5">
-                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.fill }} />
+                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.fill.replace("var(--color-", "var(--chart-").replace(")", "") }} />
                       <div>
                         <p className="text-[12px] font-semibold text-zinc-700">{item.name}</p>
                         <p className="text-[11px] text-zinc-400">{item.value} bookings</p>
@@ -256,26 +263,24 @@ export default function StudentDashboard({ bookings }: { bookings: Booking[] }) 
               <span className="text-[12px] text-zinc-400">{categoryData.length} categories</span>
             </div>
             {categoryData.length > 0 ? (
-              <div className="h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={categoryData} barSize={32}>
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fill: "#a1a1aa" }}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fill: "#a1a1aa" }}
-                      allowDecimals={false}
-                    />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Bar dataKey="count" name="Bookings" radius={[6, 6, 0, 0]} fill="#34d399" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <ChartContainer config={categoryChartConfig} className="h-[200px] w-full">
+                <BarChart data={categoryData} barSize={32}>
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    allowDecimals={false}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--color-count)" />
+                </BarChart>
+              </ChartContainer>
             ) : (
               <div className="flex h-[200px] items-center justify-center">
                 <p className="text-[12px] text-zinc-400">No data available</p>

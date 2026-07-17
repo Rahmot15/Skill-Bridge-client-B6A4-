@@ -50,6 +50,8 @@ export const Navbar = ({
   menu = [
     { title: "Home", url: "/" },
     { title: "Find Tutors", url: "/find-tutors" },
+    { title: "About", url: "/about" },
+    { title: "Contact", url: "/contact" },
   ],
   className,
 }: NavbarProps) => {
