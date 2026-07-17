@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, LogIn, GraduationCap, Shield } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -16,8 +16,38 @@ import { FaGithub } from "react-icons/fa";
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
 
   const router = useRouter();
+
+  const handleDemoLogin = async (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+
+    try {
+      setIsLoading(true);
+
+      const res = await authClient.signIn.email({
+        email: demoEmail,
+        password: demoPassword,
+        fetchOptions: { credentials: "include" },
+      });
+
+      if (res?.error) throw new Error(res.error.message);
+
+      await authClient.getSession();
+      toast.success("Login successful!", { description: `Logged in as demo user` });
+      router.push("/");
+      router.refresh();
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Login failed";
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSocialLogin = async (provider: "google" | "github") => {
     try {
@@ -38,15 +68,15 @@ export default function LoginForm() {
 
     const formData = new FormData(e.currentTarget);
 
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const emailVal = (formData.get("email") as string) || email;
+    const passwordVal = (formData.get("password") as string) || password;
 
     try {
       setIsLoading(true);
 
       const res = await authClient.signIn.email({
-        email,
-        password,
+        email: emailVal,
+        password: passwordVal,
         fetchOptions: { credentials: "include" },
       });
 
@@ -103,6 +133,8 @@ export default function LoginForm() {
                   type="email"
                   placeholder="you@example.com"
                   className="pl-10 h-12"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
@@ -119,6 +151,8 @@ export default function LoginForm() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   className="pl-10 pr-10 h-12"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <button
@@ -156,6 +190,31 @@ export default function LoginForm() {
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
+
+          {/* Demo Login */}
+          <div className="mt-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
+            <p className="text-center text-xs text-[#040316]/40 mb-3">Quick Demo Access</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleDemoLogin("student@skillbridge.com", "Student@123")}
+                disabled={isLoading}
+                className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-[13px] font-semibold text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all disabled:opacity-50"
+              >
+                <GraduationCap size={15} />
+                Student Demo
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDemoLogin("admin@skillbridge.com", "Admin@123")}
+                disabled={isLoading}
+                className="flex items-center justify-center gap-2 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-2.5 text-[13px] font-semibold text-yellow-700 hover:bg-yellow-100 hover:border-yellow-300 transition-all disabled:opacity-50"
+              >
+                <Shield size={15} />
+                Admin Demo
+              </button>
+            </div>
+          </div>
 
           {/* Divider */}
           <div className="relative my-6 animate-in fade-in duration-700 delay-400">
