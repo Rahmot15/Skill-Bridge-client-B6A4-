@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BookOpen, Clock, CheckCircle2, XCircle,
   Calendar, Mail, GraduationCap, UserCheck, Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Pagination from "@/components/ui/pagination";
+
+const ITEMS_PER_PAGE = 10;
 
 // ─── Type ─────────────────────────────────────────────────────────────────────
 
@@ -51,6 +54,12 @@ function Avatar({ name, variant }: { name: string; variant: "student" | "tutor" 
 export default function AdminBookings({ bookings }: { bookings: Booking[] }) {
   const [filter, setFilter] = useState<Filter>("ALL");
   const [search, setSearch] = useState("");
+  const [page, setPage]     = useState(1);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, filter]);
 
   const filtered = bookings.filter((b) => {
     const matchStatus = filter === "ALL" || b.status === filter;
@@ -68,6 +77,13 @@ export default function AdminBookings({ bookings }: { bookings: Booking[] }) {
     ACCEPTED: bookings.filter((b) => b.status === "ACCEPTED").length,
     REJECTED: bookings.filter((b) => b.status === "REJECTED").length,
   };
+
+  // Pagination
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedBookings = filtered.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="min-h-screen bg-zinc-50 p-6">
@@ -147,7 +163,7 @@ export default function AdminBookings({ bookings }: { bookings: Booking[] }) {
             </div>
           ) : (
             <div className="divide-y divide-zinc-50">
-              {filtered.map((b) => {
+              {paginatedBookings.map((b) => {
                 const status    = statusConfig[b.status] ?? statusConfig.PENDING;
                 const StatusIcon = status.icon;
 
@@ -208,11 +224,18 @@ export default function AdminBookings({ bookings }: { bookings: Booking[] }) {
 
           {/* Footer */}
           <div className="border-t border-zinc-50 px-5 py-3">
-            <p className="text-[11px] text-zinc-400">
-              Showing {filtered.length} of {bookings.length} bookings
-              {filter !== "ALL" && ` · ${filter}`}
-              {search && ` · "${search}"`}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] text-zinc-400">
+                Showing {paginatedBookings.length} of {filtered.length} bookings
+                {filter !== "ALL" && ` · ${filter}`}
+                {search && ` · "${search}"`}
+              </p>
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            </div>
           </div>
         </div>
 

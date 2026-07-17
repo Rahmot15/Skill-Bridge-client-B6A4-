@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layers, Plus, Calendar, FileText, Tag, Search } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import Pagination from "@/components/ui/pagination";
+
+const ITEMS_PER_PAGE = 10;
 
 // ─── Type ─────────────────────────────────────────────────────────────────────
 
@@ -22,6 +25,12 @@ export default function AdminCategories({ categories }: { categories: Category[]
   const [description, setDesc]    = useState("");
   const [loading, setLoading]     = useState(false);
   const [search, setSearch]       = useState("");
+  const [page, setPage]           = useState(1);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   async function handleCreate() {
     if (!title.trim()) {
@@ -62,6 +71,13 @@ export default function AdminCategories({ categories }: { categories: Category[]
   const filtered = list.filter((c) =>
     c.title.toLowerCase().includes(search.toLowerCase()) ||
     c.description.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Pagination
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedCategories = filtered.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
   );
 
   return (
@@ -181,7 +197,7 @@ export default function AdminCategories({ categories }: { categories: Category[]
               </div>
             ) : (
               <div className="divide-y divide-zinc-50">
-                {filtered.map((cat, i) => (
+                {paginatedCategories.map((cat, i) => (
                   <div
                     key={cat.id}
                     className="group grid grid-cols-[2fr_2fr_1fr] items-center gap-4 px-5 py-3.5 hover:bg-zinc-50/80 transition-colors"
@@ -214,10 +230,17 @@ export default function AdminCategories({ categories }: { categories: Category[]
             {/* Footer */}
             {list.length > 0 && (
               <div className="border-t border-zinc-50 px-5 py-3">
-                <p className="text-[11px] text-zinc-400">
-                  Showing {filtered.length} of {list.length} categories
-                  {search && ` · "${search}"`}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] text-zinc-400">
+                    Showing {paginatedCategories.length} of {filtered.length} categories
+                    {search && ` · "${search}"`}
+                  </p>
+                  <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                  />
+                </div>
               </div>
             )}
           </div>

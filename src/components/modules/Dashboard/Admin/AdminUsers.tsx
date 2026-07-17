@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users, Search, GraduationCap, UserCheck,
   Shield, CheckCircle2, XCircle, Ban, RotateCcw, Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import Pagination from "@/components/ui/pagination";
+
+const ITEMS_PER_PAGE = 10;
 
 // ─── Type ─────────────────────────────────────────────────────────────────────
 
@@ -36,6 +39,12 @@ export default function AdminUsers({ users }: { users: User[] }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [filter, setFilter]       = useState<Filter>("ALL");
   const [search, setSearch]       = useState("");
+  const [page, setPage]           = useState(1);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, filter]);
 
   async function toggleStatus(userId: string, current: boolean) {
     setLoadingId(userId);
@@ -78,6 +87,13 @@ export default function AdminUsers({ users }: { users: User[] }) {
     TUTOR:   list.filter((u) => u.role === "TUTOR").length,
     ADMIN:   list.filter((u) => u.role === "ADMIN").length,
   };
+
+  // Pagination
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedUsers = filtered.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="min-h-screen bg-zinc-50 p-6">
@@ -158,7 +174,7 @@ export default function AdminUsers({ users }: { users: User[] }) {
             </div>
           ) : (
             <div className="divide-y divide-zinc-50">
-              {filtered.map((user) => {
+              {paginatedUsers.map((user) => {
                 const role      = roleConfig[user.role] ?? roleConfig.ADMIN;
                 const RoleIcon  = role.icon;
                 const isLoading = loadingId === user.id;
@@ -247,11 +263,18 @@ export default function AdminUsers({ users }: { users: User[] }) {
 
           {/* Footer */}
           <div className="border-t border-zinc-50 px-5 py-3">
-            <p className="text-[11px] text-zinc-400">
-              Showing {filtered.length} of {list.length} users
-              {filter !== "ALL" && ` · ${filter}`}
-              {search && ` · "${search}"`}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] text-zinc-400">
+                Showing {paginatedUsers.length} of {filtered.length} users
+                {filter !== "ALL" && ` · ${filter}`}
+                {search && ` · "${search}"`}
+              </p>
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            </div>
           </div>
         </div>
 

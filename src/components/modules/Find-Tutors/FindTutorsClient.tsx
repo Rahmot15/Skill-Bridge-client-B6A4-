@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search, Star, Users, CheckCircle2, XCircle,
   BookOpen, Clock, DollarSign, SlidersHorizontal, X,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import Pagination from "@/components/ui/pagination";
+
+const ITEMS_PER_PAGE = 8;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -140,6 +143,7 @@ export default function FindTutorsClient({ tutors }: { tutors: TutorProfile[] })
   const [minRating, setMinRating]   = useState<number>(0);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [page, setPage]             = useState(1);
 
   // All unique languages for filter
   const allLanguages = useMemo(() =>
@@ -176,6 +180,18 @@ export default function FindTutorsClient({ tutors }: { tutors: TutorProfile[] })
 
     return result;
   }, [search, sort, maxPrice, minRating, verifiedOnly, selectedLang, tutors]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, sort, maxPrice, minRating, verifiedOnly, selectedLang]);
+
+  // Pagination
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedTutors = filtered.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
 
   const activeFilterCount = [
     maxPrice < 500, minRating > 0, verifiedOnly, !!selectedLang,
@@ -343,11 +359,22 @@ export default function FindTutorsClient({ tutors }: { tutors: TutorProfile[] })
             <p className="mt-1 text-[13px] text-zinc-400">Try adjusting your search or filters.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((tutor) => (
-              <TutorCard key={tutor.id} tutor={tutor} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {paginatedTutors.map((tutor) => (
+                <TutorCard key={tutor.id} tutor={tutor} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            <div className="mt-8">
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            </div>
+          </>
         )}
       </div>
     </div>
