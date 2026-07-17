@@ -1,30 +1,44 @@
-import { env } from "@/env";
+import { API_BASE_URL } from "@/lib/api-base-url";
 import { cookies } from "next/headers";
-
-const API_URL = env.API_URL;
 
 export const tutorService = {
   async getMyProfile() {
-    const cookieStore = await cookies();
+    try {
+      const cookieStore = await cookies();
 
-    const res = await fetch(`${API_URL}/api/tutors/me`, {
-      next: { revalidate: 60 },
-      headers: {
-        Cookie: cookieStore.toString(),
-      },
-    });
+      const cookieHeader = cookieStore
+        .getAll()
+        .map((c) => `${c.name}=${c.value}`)
+        .join("; ");
 
-    return res.json();
+      const res = await fetch(`${API_BASE_URL}/api/tutors/me`, {
+        next: { revalidate: 60 },
+        headers: {
+          cookie: cookieHeader,
+        },
+      });
+
+      if (!res.ok) return { success: false, data: null };
+
+      return await res.json();
+    } catch {
+      return { success: false, data: null };
+    }
   },
 
   async updateAvailability(availability: string) {
     const cookieStore = await cookies();
 
-    const res = await fetch(`${API_URL}/api/tutors/availability`, {
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+
+    const res = await fetch(`${API_BASE_URL}/api/tutors/availability`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieStore.toString(),
+        cookie: cookieHeader,
       },
       body: JSON.stringify({ availability }),
     });
@@ -42,11 +56,16 @@ export const tutorService = {
   }) {
     const cookieStore = await cookies();
 
-    const res = await fetch(`${API_URL}/api/tutors/profile`, {
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+
+    const res = await fetch(`${API_BASE_URL}/api/tutors/profile`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieStore.toString(),
+        cookie: cookieHeader,
       },
       body: JSON.stringify(payload),
     });
@@ -57,10 +76,15 @@ export const tutorService = {
   async getTutorBookings() {
     const cookieStore = await cookies();
 
-    const res = await fetch(`${API_URL}/api/bookings/tutor`, {
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+
+    const res = await fetch(`${API_BASE_URL}/api/bookings/tutor`, {
       next: { revalidate: 60 },
       headers: {
-        Cookie: cookieStore.toString(),
+        cookie: cookieHeader,
       },
     });
 

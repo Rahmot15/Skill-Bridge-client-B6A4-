@@ -67,6 +67,20 @@ export const Navbar = ({
   const userRole = (session?.user as any)?.role ?? "STUDENT";
   const meta = roleMeta[userRole] ?? roleMeta.STUDENT;
 
+  const dashboardPath =
+    userRole === "TUTOR"
+      ? "/tutor-dashboard"
+      : userRole === "ADMIN"
+        ? "/admin-dashboard"
+        : "/dashboard";
+
+  const profilePath =
+    userRole === "TUTOR"
+      ? "/tutor-dashboard/profile"
+      : userRole === "ADMIN"
+        ? "/admin-dashboard"
+        : "/dashboard/profile";
+
   const initials = userName
     .split(" ")
     .map((n: string) => n[0])
@@ -200,7 +214,7 @@ export const Navbar = ({
 
                   <DropdownMenuItem asChild>
                     <Link
-                      href="/profile"
+                      href={profilePath}
                       className="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 focus:bg-zinc-50 transition-colors"
                     >
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500">
@@ -214,7 +228,7 @@ export const Navbar = ({
 
                   <DropdownMenuItem asChild>
                     <Link
-                      href="/dashboard"
+                      href={dashboardPath}
                       className="flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-zinc-600 hover:bg-emerald-50 hover:text-emerald-700 focus:bg-emerald-50 focus:text-emerald-700 transition-colors"
                     >
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
@@ -313,7 +327,7 @@ export const Navbar = ({
                     </div>
 
                     <Link
-                      href="/profile"
+                      href={profilePath}
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-zinc-600 hover:bg-zinc-100 transition-colors"
                     >
@@ -321,7 +335,7 @@ export const Navbar = ({
                     </Link>
 
                     <Link
-                      href="/dashboard"
+                      href={dashboardPath}
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-medium text-zinc-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
                     >

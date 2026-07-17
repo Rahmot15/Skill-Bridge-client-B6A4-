@@ -1,17 +1,28 @@
-import { env } from "@/env";
+import { API_BASE_URL } from "@/lib/api-base-url";
 import { cookies } from "next/headers";
 
-const API_URL = env.API_URL;
-
 export async function getBookings() {
-  const cookieStore = await cookies();
+  try {
+    const cookieStore = await cookies();
 
-  const res = await fetch(`${API_URL}/api/bookings`, {
-    next: { revalidate: 60 },
-    headers: {
-      Cookie: cookieStore.toString(),
-    },
-  });
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
 
-  return res.json();
+    const res = await fetch(`${API_BASE_URL}/api/bookings`, {
+      next: { revalidate: 60 },
+      headers: {
+        cookie: cookieHeader,
+      },
+    });
+
+    if (!res.ok) {
+      return { success: false, data: [], message: "Failed to load bookings" };
+    }
+
+    return await res.json();
+  } catch {
+    return { success: false, data: [], message: "Failed to load bookings" };
+  }
 }

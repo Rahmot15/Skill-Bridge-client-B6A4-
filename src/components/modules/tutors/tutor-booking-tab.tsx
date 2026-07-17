@@ -44,17 +44,19 @@ export default function TutorBookingTab({
     // Check login first
     try {
       const sessionRes = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_BASE_URL}/api/auth/session`,
+        `${process.env.NEXT_PUBLIC_SERVER_BASE_URL}/api/auth/get-session`,
         { credentials: "include" },
       );
 
-      // if (!sessionRes.ok) {
-      //   toast.error("Please login first", {
-      //     description: "You must login to book a session.",
-      //   });
+      const session = await sessionRes.json();
 
-      //   return;
-      // }
+      if (!session?.user) {
+        toast.error("Please login first", {
+          description: "You must login to book a session.",
+        });
+
+        return;
+      }
     } catch {
       toast.error("Please login first");
       return;

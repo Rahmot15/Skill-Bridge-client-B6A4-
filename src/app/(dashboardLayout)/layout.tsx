@@ -1,7 +1,7 @@
-import { cookies } from "next/headers"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { getServerSession } from "@/lib/getServerSession"
 
 type Role = "ADMIN" | "STUDENT" | "TUTOR"
 
@@ -14,20 +14,7 @@ export default async function DashboardLayout({
   student: React.ReactNode
   tutor: React.ReactNode
 }) {
-
-  const cookieStore = cookies()
-
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SERVER_BASE_URL}/api/auth/session`,
-    {
-      headers: {
-        Cookie: cookieStore.toString(),
-      },
-      cache: "no-store",
-    }
-  )
-
-  const data = await res.json()
+  const data = await getServerSession()
 
   const role = data?.user?.role as Role
 

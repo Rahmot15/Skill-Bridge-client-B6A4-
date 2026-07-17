@@ -1,5 +1,6 @@
-const BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL;
-
+const BASE_URL =
+  process.env.NEXT_PUBLIC_SERVER_BASE_URL ||
+  "https://skill-bridge-server-woad.vercel.app";
 export const tutorPublicService = {
   async getAllTutors() {
     const res = await fetch(`${BASE_URL}/api/tutors`, {

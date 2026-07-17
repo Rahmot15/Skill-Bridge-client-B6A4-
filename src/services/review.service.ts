@@ -1,9 +1,8 @@
 "use server";
 
-import { env } from "@/env";
+import { API_BASE_URL } from "@/lib/api-base-url";
 import { cookies } from "next/headers";
 
-const API_URL = env.API_URL;
 
 export const reviewService = {
   async createReview(payload: {
@@ -14,11 +13,16 @@ export const reviewService = {
   }) {
     const cookieStore = await cookies();
 
-    const res = await fetch(`${API_URL}/api/reviews`, {
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+
+    const res = await fetch(`${API_BASE_URL}/api/reviews`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieStore.toString(),
+        cookie: cookieHeader,
       },
       body: JSON.stringify(payload),
     });
