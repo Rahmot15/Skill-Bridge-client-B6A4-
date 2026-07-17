@@ -5,6 +5,7 @@ import {
   Clock, CheckCircle2, XCircle, AlertCircle, TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Bar, BarChart, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Line, LineChart } from "recharts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,6 +20,7 @@ type Booking = {
   id: string;
   date: string;
   status: string;
+  createdAt: string;
   student: { name: string; email: string };
   category: { title: string };
 };
@@ -46,11 +48,9 @@ function StatCard({ icon: Icon, label, value, accent }: {
       accent === "yellow"  ? "bg-yellow-50 border-yellow-100"  :
       "bg-white border-zinc-100"
     )}>
-      {/* Background icon watermark */}
       <div className="absolute -right-3 -bottom-3 opacity-[0.07]">
         <Icon size={64} />
       </div>
-
       <div className={cn(
         "flex h-10 w-10 items-center justify-center rounded-xl",
         accent === "emerald" ? "bg-emerald-100 text-emerald-600" :
@@ -59,7 +59,6 @@ function StatCard({ icon: Icon, label, value, accent }: {
       )}>
         <Icon size={18} />
       </div>
-
       <div className="mt-3">
         <div className={cn(
           "text-[28px] font-bold leading-none",
@@ -75,6 +74,22 @@ function StatCard({ icon: Icon, label, value, accent }: {
   );
 }
 
+// ─── Chart Tooltip ────────────────────────────────────────────────────────────
+
+function ChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-zinc-100 bg-white px-3 py-2 shadow-lg">
+      <p className="text-[11px] font-semibold text-zinc-600">{label}</p>
+      {payload.map((entry: any, i: number) => (
+        <p key={i} className="text-[12px] text-zinc-500">
+          {entry.name}: <span className="font-semibold text-zinc-800">{entry.value}</span>
+        </p>
+      ))}
+    </div>
+  );
+}
+
 // ─── Booking Row ──────────────────────────────────────────────────────────────
 
 function BookingRow({ b }: { b: Booking }) {
@@ -86,34 +101,26 @@ function BookingRow({ b }: { b: Booking }) {
   };
   const StatusIcon = status.icon;
 
-  // Avatar initials
   const initials = b.student?.name
     ?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) ?? "?";
 
   return (
     <div className="group flex items-center gap-4 rounded-xl px-3 py-3 hover:bg-zinc-50 transition-colors">
-      {/* Avatar — yellow gradient for student */}
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-300 to-yellow-400 text-[12px] font-bold text-zinc-800">
         {initials}
       </div>
-
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-semibold text-zinc-800 truncate">
           {b.student?.name}
         </p>
         <p className="text-[11px] text-zinc-400 truncate">{b.category?.title}</p>
       </div>
-
-      {/* Date */}
       <div className="flex items-center gap-1.5 text-[12px] text-zinc-400 shrink-0">
         <Calendar size={11} />
         {new Date(b.date).toLocaleDateString("en-US", {
           month: "short", day: "numeric",
         })}
       </div>
-
-      {/* Status badge */}
       <span className={cn(
         "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold shrink-0",
         status.cls
@@ -147,6 +154,28 @@ export default function TutorDashboard({ tutor, bookings }: {
 }) {
   const pending  = bookings.filter((b) => b.status === "PENDING").length;
   const accepted = bookings.filter((b) => b.status === "ACCEPTED").length;
+  const rejected = bookings.filter((b) => b.status === "REJECTED").length;
+
+  // Bar chart — booking statuses
+  const statusData = [
+    { name: "Pending", count: pending },
+    { name: "Accepted", count: accepted },
+    { name: "Rejected", count: rejected },
+  ];
+
+  // Line chart — bookings over last 6 months
+  const now = new Date();
+  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthlyData = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const month = d.getMonth();
+    const year = d.getFullYear();
+    const count = bookings.filter((b) => {
+      const bd = new Date(b.createdAt || b.date);
+      return bd.getMonth() === month && bd.getFullYear() === year;
+    }).length;
+    return { name: monthLabels[month], bookings: count };
+  });
 
   return (
     <div className="min-h-screen bg-zinc-50 p-6">
@@ -155,7 +184,6 @@ export default function TutorDashboard({ tutor, bookings }: {
         {/* ── Header ── */}
         <div className="flex items-end justify-between">
           <div>
-            {/* yellow label → tutor portal */}
             <p className="text-[11px] font-semibold uppercase tracking-widest text-yellow-600">
               Tutor Portal
             </p>
@@ -185,14 +213,88 @@ export default function TutorDashboard({ tutor, bookings }: {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatCard icon={Users}    label="Total Students"     value={tutor.totalStudents}    accent="emerald" />
           <StatCard icon={BookOpen} label="Completed Sessions" value={tutor.completedSessions} />
-          {/* Rating → yellow (attention/quality) */}
           <StatCard icon={Star}     label="Rating"             value={tutor.rating || "—"}    accent="yellow" />
           <StatCard icon={TrendingUp} label="Total Reviews"    value={tutor.totalReviews} />
         </div>
 
+        {/* ── Charts row ── */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+          {/* Bar Chart — Booking Statuses */}
+          <div className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-[13px] font-bold text-zinc-800">Booking Status</h2>
+              <span className="text-[12px] text-zinc-400">{bookings.length} total</span>
+            </div>
+            <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={statusData} barSize={32}>
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "#a1a1aa" }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "#a1a1aa" }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Bar dataKey="count" name="Bookings" radius={[6, 6, 0, 0]}>
+                    {statusData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.name === "Pending" ? "#facc15" : entry.name === "Accepted" ? "#34d399" : "#f87171"}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Line Chart — Bookings Over Time */}
+          <div className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-[13px] font-bold text-zinc-800">Bookings Trend</h2>
+              <span className="text-[12px] text-zinc-400">Last 6 months</span>
+            </div>
+            <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyData}>
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "#a1a1aa" }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "#a1a1aa" }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Line
+                    type="monotone"
+                    dataKey="bookings"
+                    name="Bookings"
+                    stroke="#eab308"
+                    strokeWidth={2.5}
+                    dot={{ fill: "#eab308", r: 4, strokeWidth: 0 }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+        </div>
+
         {/* ── Sessions table ── */}
         <div className="rounded-2xl border border-zinc-100 bg-white shadow-sm">
-          {/* Card header */}
           <div className="flex items-center justify-between border-b border-zinc-50 px-5 py-4">
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50">
@@ -204,8 +306,6 @@ export default function TutorDashboard({ tutor, bookings }: {
               <span className="text-[12px] text-zinc-400">{bookings.length} total</span>
             )}
           </div>
-
-          {/* Rows */}
           <div className="px-3 py-2">
             {bookings.length === 0 ? (
               <EmptyBookings />
@@ -217,8 +317,6 @@ export default function TutorDashboard({ tutor, bookings }: {
               </div>
             )}
           </div>
-
-          {/* Footer — show more */}
           {bookings.length > 8 && (
             <div className="border-t border-zinc-50 px-5 py-3">
               <button className="text-[12px] font-semibold text-emerald-600 hover:text-emerald-700 transition">
