@@ -10,13 +10,13 @@ import {
   BookOpen,
   CheckCircle2,
   XCircle,
-  Clock,
   DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import TutorDetailsTab from "../tutors/tutor-details-tab";
 import TutorReviewsTab from "../tutors/tutor-reviews-tab";
 import TutorBookingTab from "../tutors/tutor-booking-tab";
+import RelatedTutors from "./RelatedTutors";
 
 const Toaster = dynamic(
   () => import("sonner").then((m) => ({ default: m.Toaster })),
@@ -33,6 +33,7 @@ export default function TutorDetailsClient({
   tutor,
   reviews,
   categories,
+  allTutors,
 }: any) {
   const [tab, setTab] = useState("details");
 
@@ -215,6 +216,11 @@ export default function TutorDetailsClient({
           {tab === "booking" && (
             <TutorBookingTab tutor={tutor} categories={categories} />
           )}
+        </div>
+
+        {/* ── Related Tutors ── */}
+        <div className="mx-auto max-w-6xl px-6 pb-12">
+          <RelatedTutors currentTutorId={tutor.id} allTutors={allTutors} />
         </div>
       </div>
     </>

@@ -1,5 +1,9 @@
-import { Calendar, BookOpen, Clock, CheckCircle2, XCircle, AlertCircle, GraduationCap } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Calendar, BookOpen, Clock, CheckCircle2, XCircle, AlertCircle, GraduationCap, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ReviewForm from "./ReviewForm";
 
 type Booking = {
   id: string;
@@ -7,6 +11,7 @@ type Booking = {
   date: string;
   status: string;
   tutor: {
+    id: string;
     name: string;
     image: string;
     email: string;
@@ -15,8 +20,6 @@ type Booking = {
     title: string;
   };
 };
-
-// ─── Status config ────────────────────────────────────────────────────────────
 
 const statusConfig: Record<string, {
   label: string;
@@ -61,8 +64,6 @@ const fallbackStatus = {
   line: "border-zinc-200",
 };
 
-// ─── Group bookings by date ───────────────────────────────────────────────────
-
 function groupByDate(bookings: Booking[]) {
   const groups: Record<string, Booking[]> = {};
   const sorted = [...bookings].sort(
@@ -85,8 +86,6 @@ function formatGroupDate(dateStr: string) {
   if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
   return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 }
-
-// ─── Stats bar ────────────────────────────────────────────────────────────────
 
 function StatsBar({ bookings }: { bookings: Booking[] }) {
   const total    = bookings.length;
@@ -116,15 +115,13 @@ function StatsBar({ bookings }: { bookings: Booking[] }) {
   );
 }
 
-// ─── Single timeline card ─────────────────────────────────────────────────────
-
 function TimelineCard({ b, isLast }: { b: Booking; isLast: boolean }) {
   const status = statusConfig[b.status] ?? fallbackStatus;
   const StatusIcon = status.icon;
+  const [showReview, setShowReview] = useState(false);
 
   return (
     <div className="flex gap-4">
-      {/* Timeline: dot + dashed line */}
       <div className="flex flex-col items-center pt-1.5">
         <div className={cn("h-3 w-3 rounded-full shrink-0", status.dot)} />
         {!isLast && (
@@ -132,20 +129,23 @@ function TimelineCard({ b, isLast }: { b: Booking; isLast: boolean }) {
         )}
       </div>
 
-      {/* Card */}
       <div className="group mb-4 flex-1 overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:border-zinc-200">
-        {/* Colored top strip */}
         <div className={cn("h-1 w-full bg-gradient-to-r", status.strip)} />
 
         <div className="p-4">
-          {/* Tutor row */}
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <img
-                src={b.tutor.image}
-                alt={b.tutor.name}
-                className="h-10 w-10 rounded-xl object-cover ring-2 ring-zinc-100 group-hover:ring-emerald-100 transition-all"
-              />
+              {b.tutor.image ? (
+                <img
+                  src={b.tutor.image}
+                  alt={b.tutor.name}
+                  className="h-10 w-10 rounded-xl object-cover ring-2 ring-zinc-100 group-hover:ring-emerald-100 transition-all"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-300 to-yellow-400 text-[12px] font-bold text-zinc-800">
+                  {b.tutor.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                </div>
+              )}
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[13px] font-semibold text-zinc-800">{b.tutor.name}</span>
@@ -158,7 +158,6 @@ function TimelineCard({ b, isLast }: { b: Booking; isLast: boolean }) {
               </div>
             </div>
 
-            {/* Status badge */}
             <span className={cn(
               "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold",
               status.badge
@@ -168,17 +167,36 @@ function TimelineCard({ b, isLast }: { b: Booking; isLast: boolean }) {
             </span>
           </div>
 
-          {/* Message */}
           <p className="mt-3 rounded-lg bg-zinc-50 px-3 py-2 text-[13px] leading-relaxed text-zinc-600 line-clamp-2">
             {b.message}
           </p>
+
+          {/* Review button for accepted bookings */}
+          {b.status === "ACCEPTED" && (
+            <div className="mt-3">
+              {!showReview ? (
+                <button
+                  onClick={() => setShowReview(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-yellow-50 px-3 py-1.5 text-[12px] font-semibold text-yellow-700 ring-1 ring-yellow-200 hover:bg-yellow-100 transition"
+                >
+                  <MessageSquare size={11} />
+                  Leave a Review
+                </button>
+              ) : (
+                <ReviewForm
+                  tutorId={b.tutor.id}
+                  tutorName={b.tutor.name}
+                  bookingId={b.id}
+                  onSuccess={() => setShowReview(false)}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState() {
   return (
@@ -194,8 +212,6 @@ function EmptyState() {
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
-
 export default function StudentBookings({ bookings }: { bookings: Booking[] }) {
   const groups = groupByDate(bookings);
   const groupKeys = Object.keys(groups);
@@ -204,7 +220,6 @@ export default function StudentBookings({ bookings }: { bookings: Booking[] }) {
     <div className="min-h-screen bg-zinc-50 p-6">
       <div className="mx-auto max-w-7xl space-y-6">
 
-        {/* Header */}
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-emerald-600">
@@ -221,10 +236,8 @@ export default function StudentBookings({ bookings }: { bookings: Booking[] }) {
           )}
         </div>
 
-        {/* Stats */}
         {bookings.length > 0 && <StatsBar bookings={bookings} />}
 
-        {/* Timeline or empty */}
         {bookings.length === 0 ? (
           <EmptyState />
         ) : (
@@ -233,7 +246,6 @@ export default function StudentBookings({ bookings }: { bookings: Booking[] }) {
               const items = groups[dateKey];
               return (
                 <div key={dateKey}>
-                  {/* Date group label */}
                   <div className="mb-3 flex items-center gap-3">
                     <div className="flex items-center gap-1.5 rounded-lg border border-zinc-100 bg-white px-3 py-1.5 shadow-sm">
                       <Calendar size={11} className="text-emerald-500" />
@@ -244,7 +256,6 @@ export default function StudentBookings({ bookings }: { bookings: Booking[] }) {
                     <div className="h-px flex-1 bg-zinc-200" />
                   </div>
 
-                  {/* Cards */}
                   <div>
                     {items.map((b, i) => (
                       <TimelineCard key={b.id} b={b} isLast={i === items.length - 1} />

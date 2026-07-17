@@ -5,7 +5,6 @@ export default async function TutorAvailabilityPage() {
   const res = await tutorService.getMyProfile();
 
   const tutor = res?.data;
-  console.log(tutor);
 
   if (!tutor) {
     return (

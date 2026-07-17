@@ -35,6 +35,7 @@ const roleMenus = {
   ],
   TUTOR: [
     { title: "Dashboard",    url: "/tutor-dashboard",              icon: IconDashboard   },
+    { title: "Bookings",     url: "/tutor-dashboard/bookings",     icon: IconListDetails },
     { title: "Availability", url: "/tutor-dashboard/availability", icon: IconListDetails },
     { title: "Profile",      url: "/tutor-dashboard/profile",      icon: IconUsers       },
   ],

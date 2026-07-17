@@ -14,11 +14,14 @@ export default async function Page({
 
   const categories = await tutorPublicService.getCategories();
 
+  const allTutors = await tutorPublicService.getAllTutors();
+
   return (
     <TutorDetailsClient
       tutor={tutor}
       reviews={reviews}
       categories={categories}
+      allTutors={allTutors}
     />
   );
 }
