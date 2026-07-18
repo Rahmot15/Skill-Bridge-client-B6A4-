@@ -89,4 +89,24 @@ export const adminService = {
 
     return res.json();
   },
+
+  async getStats() {
+    const cookieStore = await cookies();
+
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+
+    const res = await fetch(`${API_BASE_URL}/api/admin/stats`, {
+      next: { revalidate: 60 },
+      headers: {
+        cookie: cookieHeader,
+      },
+    });
+
+    if (!res.ok) return { success: false, data: null };
+
+    return res.json();
+  },
 };

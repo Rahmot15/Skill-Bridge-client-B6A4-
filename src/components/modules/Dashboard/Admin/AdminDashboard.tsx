@@ -5,14 +5,18 @@ import { cn } from "@/lib/utils";
 import { Pie, PieChart, Cell, Bar, BarChart, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
-// ─── Type ─────────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  createdAt: string;
+type Stats = {
+  totalUsers: number;
+  totalTutors: number;
+  totalStudents: number;
+  totalBookings: number;
+  totalCategories: number;
+  pendingBookings: number;
+  approvedBookings: number;
+  rejectedBookings: number;
+  cancelledBookings: number;
 };
 
 type Booking = {
@@ -22,11 +26,6 @@ type Booking = {
   student: { name: string };
   tutor: { name: string };
   category: { title: string };
-};
-
-type Category = {
-  id: string;
-  title: string;
 };
 
 // ─── Chart Config ─────────────────────────────────────────────────────────────
@@ -139,16 +138,12 @@ function QuickAction({ icon: Icon, label, href, accent }: {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function AdminDashboard({ users, bookings, categories }: {
-  users: User[];
+export default function AdminDashboard({ stats, bookings }: {
+  stats: Stats;
   bookings: Booking[];
-  categories: Category[];
 }) {
-  const totalUsers = users.length;
-  const totalTutors = users.filter((u) => u.role === "TUTOR").length;
-  const totalStudents = users.filter((u) => u.role === "STUDENT").length;
-  const totalBookings = bookings.length;
-  const totalCategories = categories.length;
+  const { totalUsers, totalTutors, totalStudents, totalBookings, totalCategories,
+    pendingBookings, approvedBookings, rejectedBookings } = stats;
 
   const tutorPct = totalUsers > 0 ? Math.round((totalTutors / totalUsers) * 100) : 0;
   const studentPct = totalUsers > 0 ? Math.round((totalStudents / totalUsers) * 100) : 0;
@@ -161,9 +156,9 @@ export default function AdminDashboard({ users, bookings, categories }: {
 
   // Bar chart data — booking statuses
   const bookingStatusData = [
-    { name: "Pending", count: bookings.filter((b) => b.status === "PENDING").length, fill: "var(--color-pending)" },
-    { name: "Approved", count: bookings.filter((b) => b.status === "APPROVED").length, fill: "var(--color-approved)" },
-    { name: "Rejected", count: bookings.filter((b) => b.status === "REJECTED").length, fill: "var(--color-rejected)" },
+    { name: "Pending", count: pendingBookings, fill: "var(--color-pending)" },
+    { name: "Approved", count: approvedBookings, fill: "var(--color-approved)" },
+    { name: "Rejected", count: rejectedBookings, fill: "var(--color-rejected)" },
   ];
 
   return (
