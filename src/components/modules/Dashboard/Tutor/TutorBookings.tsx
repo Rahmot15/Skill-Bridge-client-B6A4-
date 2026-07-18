@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   Clock, CheckCircle2, XCircle, Calendar,
-  BookOpen, MessageSquare, AlertCircle,
+  BookOpen, MessageSquare, AlertCircle, Ban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -19,9 +19,10 @@ type Booking = {
 };
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; cls: string; dot: string }> = {
-  PENDING:  { label: "Pending",  icon: Clock,        cls: "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200",  dot: "bg-yellow-400"  },
-  APPROVED: { label: "Approved", icon: CheckCircle2, cls: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200", dot: "bg-emerald-400" },
-  REJECTED: { label: "Rejected", icon: XCircle,      cls: "bg-red-50 text-red-600 ring-1 ring-red-200",           dot: "bg-red-400"     },
+  PENDING:   { label: "Pending",   icon: Clock,        cls: "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200",   dot: "bg-yellow-400"  },
+  APPROVED:  { label: "Approved",  icon: CheckCircle2, cls: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200", dot: "bg-emerald-400" },
+  REJECTED:  { label: "Rejected",  icon: XCircle,      cls: "bg-red-50 text-red-600 ring-1 ring-red-200",            dot: "bg-red-400"     },
+  CANCELLED: { label: "Cancelled", icon: Ban,           cls: "bg-zinc-100 text-zinc-500 ring-1 ring-zinc-200",       dot: "bg-zinc-400"    },
 };
 
 export default function TutorBookings({ bookings: initial }: { bookings: Booking[] }) {
@@ -48,12 +49,35 @@ export default function TutorBookings({ bookings: initial }: { bookings: Booking
       );
 
       toast.success(status === "APPROVED" ? "Booking approved!" : "Booking rejected", {
-        description: status === "APPROVED"
-          ? "The student has been notified."
-          : "The student has been notified.",
+        description: "The student has been notified.",
       });
     } catch {
       toast.error("Failed to update booking", { description: "Please try again." });
+    } finally {
+      setLoadingId(null);
+    }
+  }
+
+  async function handleCancel(id: string) {
+    setLoadingId(id);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SERVER_BASE_URL}/api/bookings/${id}/cancel`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed");
+
+      setBookings((prev) =>
+        prev.map((b) => (b.id === id ? { ...b, status: "CANCELLED" } : b))
+      );
+
+      toast.success("Booking cancelled");
+    } catch {
+      toast.error("Failed to cancel booking");
     } finally {
       setLoadingId(null);
     }
@@ -109,6 +133,7 @@ export default function TutorBookings({ bookings: initial }: { bookings: Booking
                 isLoading={loadingId === b.id}
                 onApprove={() => handleStatus(b.id, "APPROVED")}
                 onReject={() => handleStatus(b.id, "REJECTED")}
+                onCancel={() => handleCancel(b.id)}
                 showActions
               />
             ))}
@@ -152,12 +177,14 @@ function BookingCard({
   isLoading,
   onApprove,
   onReject,
+  onCancel,
   showActions,
 }: {
   booking: Booking;
   isLoading?: boolean;
   onApprove?: () => void;
   onReject?: () => void;
+  onCancel?: () => void;
   showActions?: boolean;
 }) {
   const status = statusConfig[booking.status] ?? {
@@ -253,6 +280,14 @@ function BookingCard({
               >
                 <XCircle size={14} />
                 Reject
+              </button>
+              <button
+                onClick={onCancel}
+                disabled={isLoading}
+                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-[13px] font-semibold text-zinc-500 hover:bg-zinc-100 disabled:opacity-60 transition"
+              >
+                <Ban size={13} />
+                Cancel
               </button>
             </div>
           )}

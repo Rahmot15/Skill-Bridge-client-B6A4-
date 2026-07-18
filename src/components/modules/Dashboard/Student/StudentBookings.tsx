@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, BookOpen, Clock, CheckCircle2, XCircle, AlertCircle, GraduationCap, MessageSquare } from "lucide-react";
+import { Calendar, BookOpen, Clock, CheckCircle2, XCircle, AlertCircle, GraduationCap, MessageSquare, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReviewForm from "./ReviewForm";
 
@@ -53,6 +53,14 @@ const statusConfig: Record<string, {
     strip: "from-red-300 to-red-400",
     line: "border-red-100",
   },
+  CANCELLED: {
+    label: "Cancelled",
+    icon: Ban,
+    badge: "bg-zinc-400/15 text-zinc-600 ring-1 ring-zinc-200",
+    dot: "bg-zinc-400 ring-4 ring-zinc-100",
+    strip: "from-zinc-300 to-zinc-400",
+    line: "border-zinc-200",
+  },
 };
 
 const fallbackStatus = {
@@ -88,10 +96,10 @@ function formatGroupDate(dateStr: string) {
 }
 
 function StatsBar({ bookings }: { bookings: Booking[] }) {
-  const total    = bookings.length;
-  const pending  = bookings.filter((b) => b.status === "PENDING").length;
-  const accepted = bookings.filter((b) => b.status === "ACCEPTED").length;
-  const rejected = bookings.filter((b) => b.status === "REJECTED").length;
+  const total     = bookings.length;
+  const pending   = bookings.filter((b) => b.status === "PENDING").length;
+  const accepted  = bookings.filter((b) => b.status === "ACCEPTED").length;
+  const rejected  = bookings.filter((b) => b.status === "REJECTED").length;
 
   return (
     <div className="grid grid-cols-4 gap-3">
@@ -119,6 +127,26 @@ function TimelineCard({ b, isLast }: { b: Booking; isLast: boolean }) {
   const status = statusConfig[b.status] ?? fallbackStatus;
   const StatusIcon = status.icon;
   const [showReview, setShowReview] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  async function handleCancel() {
+    setCancelling(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SERVER_BASE_URL}/api/bookings/${b.id}/cancel`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+      const data = await res.json();
+      if (data?.success) window.location.reload();
+    } catch {
+      // ignore
+    } finally {
+      setCancelling(false);
+    }
+  }
 
   return (
     <div className="flex gap-4">
@@ -170,6 +198,20 @@ function TimelineCard({ b, isLast }: { b: Booking; isLast: boolean }) {
           <p className="mt-3 rounded-lg bg-zinc-50 px-3 py-2 text-[13px] leading-relaxed text-zinc-600 line-clamp-2">
             {b.message}
           </p>
+
+          {/* Cancel button for pending bookings */}
+          {b.status === "PENDING" && (
+            <div className="mt-3">
+              <button
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-[12px] font-semibold text-red-600 ring-1 ring-red-200 hover:bg-red-100 disabled:opacity-60 transition"
+              >
+                <Ban size={11} />
+                {cancelling ? "Cancelling..." : "Cancel Booking"}
+              </button>
+            </div>
+          )}
 
           {/* Review button for accepted bookings */}
           {b.status === "ACCEPTED" && (
