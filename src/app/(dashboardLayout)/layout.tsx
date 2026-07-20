@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { getServerSession } from "@/lib/getServerSession"
+import { redirect } from "next/navigation"
 
 type Role = "ADMIN" | "STUDENT" | "TUTOR"
 
@@ -19,7 +20,7 @@ export default async function DashboardLayout({
   const role = data?.user?.role as Role
 
   if (!role) {
-    return <div>Unauthorized</div>
+    redirect("/login")
   }
 
   const roleUI = {
